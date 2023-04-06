@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gartic.io Who Where</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
+        *{margin:0;padding:0;box-sizing: border-box;border-radius:5px;}
+        body{font-family: 'Roboto';}
+        
+        .container{
+            width:90%;
+            margin:30px auto;
+            border:2px solid #ccc;
+            padding:20px;
+            text-align:center;
+        }
+        .users{
+            width:100%;
+            border:2px solid #ccc;
+            display:flex;
+            flex-wrap: wrap;
+            max-height:600px;
+            overflow-y:scroll;
+        }
+        .user{
+            border:2px solid #ccc;
+            margin:10px;
+            width:140px;
+            padding:20px 0px;
+            text-align:center;
+            background:#eee;
+        }
+        .username{background:#2f2f2f;color:#f1f1f1;padding:1px;}
+        .userroom{font-size:11pt;background:royalblue;text-decoration:none;color:#f1f1f1;padding:1px;margin:5px;}
+        .langOpt{background:royalblue;color:white;padding:5px;}
+    </style>
+    <script>
+        function f(x){return document.querySelector(x)}
+        function fa(x){return document.querySelectorAll(x)}
+        function log(x){return console.log(x)}
+
+        let lastroomcode=0
+
+        function updateList(){
+            window.location.href.indexOf('?lang=')!=-1?lang=window.location.href.split('lang=')[1]:lang=8
+            f('.langOpt').value=lang
+            f(".users").innerHTML=""
+            fetch('https://gartic.io/req/list?search=&language[]='+lang).then(x=>x.json()).then(x=>{
+                lastroomcode=x[0].code
+                nextcolor='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6)
+                userscount=0
+                x.forEach(y=>{
+                    if(y.quant!=0){
+                        fetch('https://gartic.io/serverViewer?room='+y.code).then(z=>z.text()).then(z=>{
+                            let ws=new WebSocket('wss://'+z.split("//")[1].split(".")[0]+'.gartic.io/socket.io/?EIO=3&transport=websocket')
+                            ws.onopen=()=>{
+                                ws.send('42[12,{"v":20000,"sala":"'+y.id+'"}]')
+                                ws.onmessage=(x)=>{
+                                    if(x.data.indexOf('42[5')!=-1){
+                                        jsondata=JSON.parse('[{'+x.data.split('[{')[1].split('}]')[0]+'}]')
+                                        jsondata.forEach(jsonobj=>{
+                                            jsonobj.foto?ppurl=jsonobj.foto:ppurl='https://gartic.io/static/images/avatar/svg/'+jsonobj.avatar+'.svg'
+                                            if(y.code!=lastroomcode){
+                                                lastroomcode=y.code;
+                                                nextcolor='#'+(0x1000000+Math.random()*0xffffff).toString(16).substr(1,6)
+                                            }
+                                            
+                                            html=`
+                                                <div class="user" style="background:`+nextcolor+`">
+                                                    <img src="`+ppurl+`" width="100" alt="" class="userpp"><br>
+                                                    <span class="username">`+jsonobj.nick+`</span><br>
+                                                    <a href="https://gartic.io/`+y.code+`" target="blank" class="userroom">gartic.io/`+y.code+`</a>
+                                                </div>
+                                                `
+                                            if(ppurl.indexOf('gartic')==-1){
+                                                userscount++;
+                                                f(".users").innerHTML+=html
+                                                f('.userscount').innerText=userscount
+                                            }
+                                        })
+                                        
+                                    }
+                                    x.data.indexOf('42[5')!=-1?ws.close():0
+                                }
+                            }
+                        })
+                    }
+                })
+            })
+        }
+
+        window.addEventListener('load',updateList)
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Gartic.io Kim Hangi Odada?</h2><br>
+        Language <select class="langOpt" onchange="window.location.href='http://jokescript.rf.gd/whowhere/?lang='+this.value">
+				<option value="8">Türkçe</option>
+                <option value="23">Azərbaycanca</option>
+                <option value="2">English</option>
+				<option value="4">Français</option>
+                <option value="1">Português</option>
+        </select> <span class='userscount'></span> kişi listeleniyor.<br><br>
+        <div class="users">
+        </div><br><br>
+        <p>@2023 | All Content By YGN<br>
+        YouTube <a href="https://www.youtube.com/channel/UCavCThfWy-IA3NcqZ7w3exQ" target="blank">Jokescript</a></p><br>
+        <p><strong>NOT</strong> Sadece profil resmi olan oyuncular gözükür.</p>
+    </div>
+</body>
+</html>

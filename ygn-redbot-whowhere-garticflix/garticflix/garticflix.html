@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="ie=edge">
+		<title>YGN - Garticflix</title>
+        <link rel="icon" href="icon.png" type="image/icon type">
+		<style>
+			*{margin:0px;padding:0px;}
+			body{display:flex;font-family:arial;overflow:hidden;}
+			.leftcontent,.rightcontent,.chat{background:#111;width:70%;height:100vh;border:1px solid black;padding:10px;}
+			.tv{width:95%;height:95%;position:relative;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:20px;box-shadow:10px 10px 10px;}
+			.leftcontent{padding:0px;}
+			.rightcontent{width:30%;color:#f1f1f1;display:block;}
+			.rooms{overflow-y:scroll;height:80%;}
+			.room{display:flex;background:#222;font-size:11pt;width:85%;color:#f1f1f1;border-radius:20px;position:relative;margin-top:10px;padding:20px;font-weight:bold;}
+			.room:hover{background:#444;}
+			::-webkit-scrollbar{width:10px;border-radius:10px;}
+			::-webkit-scrollbar-track{background:#f1f1f1;border-radius:10px;}
+			::-webkit-scrollbar-thumb{background:#666;}
+			::-webkit-scrollbar-thumb:hover{background:#444;}
+			input,select{padding:5px;background:#333;color:#f1f1f1;font-size:10pt;width:70px;border-radius:5px;}
+			select{width:100px;}
+			.roomico{width:40px;height:40px;z-index:10;}
+			.roominfo{position:absolute;height:15px;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1;padding:5px;background:#333;border-radius:5px;}
+			.favico{width:30px;height:30px;position:absolute;z-index:10;right:15px;top:50%;transform:translate(0,-50%);}
+			.selected{background:#444;}
+            .hideRooms{background:tomato;width:30px;border-radius:0px;border:none;}
+            .showRooms{background:dodgerblue;width:30px;border-radius:0px;border:none;}
+            .roomtxt{width:200px;}
+		</style>
+		<script>
+			let favtype="",favhtml="",html="",monfav=0;
+			window.addEventListener("load",()=>{
+				localStorage.getItem("favs")==null&&localStorage.getItem("favs")==undefined?localStorage.setItem("favs",""):0;
+				loadRooms();
+			})
+
+			function loadRooms(lng="8"){
+				document.querySelector(".rooms").innerHTML="";
+				favhtml=""
+				html=""
+				fetch("https://gartic.io/req/list?search="+document.querySelector(".searchparam").value+"&language[]="+lng+document.querySelector(".theme").value).then(x=>x.json()).then(x=>{x.forEach(x=>{
+					searchfav(x.code)!=-1?favtype="fav":favtype="unfav";
+					if(favtype=="fav"){
+						favhtml+=`<div onclick="tv(this,'https://gartic.io/`+x.code+`/viewer')" class="room"><img class="roomico" src="https://gartic.io/static/images/subjects/`+x.subject+`.svg">&nbsp;&nbsp;&nbsp;<div class="roominfo">#`+x.code.slice(-3)+` `+x.quant+`/`+x.max+`</div><img onmouseover="monfav=1" onmouseout="monfav=0" onclick="favprocess(this,'`+x.code+`')" src="`+favtype+`.svg" class="favico"></div>`
+					}
+					html+=`<div onclick="tv(this,'https://gartic.io/`+x.code+`/viewer')" class="room"><img class="roomico" src="https://gartic.io/static/images/subjects/`+x.subject+`.svg">&nbsp;&nbsp;&nbsp;<div class="roominfo">#`+x.code.slice(-3)+` `+x.quant+`/`+x.max+`</div><img title="Favori odam" onmouseover="monfav=1" onmouseout="monfav=0" onclick="favprocess(this,'`+x.code+`')" src="`+favtype+`.svg" class="favico"></div>`
+					
+				});document.querySelector(".justfav").checked?document.querySelector(".rooms").innerHTML+=favhtml:document.querySelector(".rooms").innerHTML+=html;})
+			}
+
+			function tv(el,x){
+				if(monfav==0){
+					document.querySelectorAll(".room").forEach(x=>x.classList.remove("selected"))
+					el.classList.add("selected");
+					window.onbeforeunload="null";
+					document.querySelector(".tv").setAttribute("src",x)
+                    document.querySelector(".roomtxt").value=x.split("/viewer")[0];
+				}
+			}
+			function searchfav(x){
+				return localStorage.getItem("favs").indexOf(x)
+			}
+			function addfav(x){
+				searchfav(x)==-1?localStorage.setItem("favs",localStorage.getItem("favs")+x+";"):0
+			}
+			function delfav(x){
+				searchfav(x)!=-1?localStorage.setItem("favs",localStorage.getItem("favs").split(x+";").join("")):0;
+			}
+			function favprocess(x,y){
+				searchfav(y)==-1?addfav(y):delfav(y);
+				searchfav(y)==-1?x.setAttribute("src","unfav.svg"):x.setAttribute("src","fav.svg");
+				
+			}
+		</script>
+	</head>
+	<body>
+		<div class="leftcontent">
+			<iframe class="tv" src="main.html">Bu tarayıcı desteklenmiyor.</iframe>
+		</div>
+        <input type="submit" class="hideRooms" value="►" onclick="change(this)">
+		<div class="rightcontent"><br><br>
+			<h2>Rooms&nbsp;&nbsp;<span style="font-size:11pt;">Room:</span> <input onclick="this.select()" placeholder="Oda seç" class="roomtxt"><br><input type="text" class="searchparam" placeholder="Ara" onkeyup="loadRooms(document.querySelector('.lang').value)">
+				<select class="theme" onchange="loadRooms(document.querySelector('.lang').value)">
+					<option value="">Theme</option>
+					<option value="&subject[]=30">Other</option>
+					<option value="&subject[]=28">Anime</option>
+					<option value="&subject[]=1">General</option>
+					<option value="&subject[]=12">Games</option>
+					<option value="&subject[]=24">Youtuber</option>
+					<option value="&subject[]=11">LoL</option>
+					<option value="&subject[]=2">Animals</option>
+					<option value="&subject[]=31">Minecraft</option>
+					<option value="&subject[]=4">Foods</option>
+					<option value="&subject[]=9">Animation</option>
+					<option value="&subject[]=35">Naruto</option>
+                    <option value="&subject[]=16">Flags</option>
+                    <option value="&subject[]=10">Songs</option>
+                    <option value="&subject[]=17">Football</option>
+                    <option value="&subject[]=26">Logo</option>
+                    <option value="&subject[]=5">Verbs</option>
+                    <option value="&subject[]=33">FNAF</option>
+				</select>
+                <select class="lang" onchange="loadRooms(this.value)">
+					<option value="8">Language</option>
+					<option value="8">Türkçe</option>
+                    <option value="23">Azərbaycanca</option>
+                    <option value="2">English</option>
+					<option value="4">Français</option>
+                    <option value="7">Русский</option>
+                    <option value="1">Português</option>
+                    <option value="19">العربية</option>
+                    <option value="9">中文 (臺灣)</option>
+				</select>&nbsp;<input type="submit" value="Refresh" onclick="loadRooms(document.querySelector('.lang').value)">
+			</h2><br>Favori Rooms:<input onchange="loadRooms()" type="checkbox" class="justfav"><br><br><hr>
+			<div class="rooms">
+				<div class="room"><img class="roomico" src="https://gartic.io/static/images/subjects/1.svg">&nbsp;&nbsp;&nbsp;<div class="roominfo">#??? ?/?</div></div>
+			</div>
+		</div>
+        <script>
+            function change(x){
+                if(x.getAttribute("class")=="hideRooms"){
+                    document.querySelector(".rightcontent").style.display="none";
+                    document.querySelector(".leftcontent").style.width="100%";
+                    x.value="◄";
+                    x.setAttribute("class","showRooms");
+                }else{
+                    document.querySelector(".rightcontent").style.display="block";
+                    document.querySelector(".leftcontent").style.width="70%";
+                    x.value="►";
+                    x.setAttribute("class","hideRooms");
+                }
+            }
+        </script>
+	</body>
+</html>
